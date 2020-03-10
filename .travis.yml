@@ -1,0 +1,22 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t ganuelito/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run ganuelito/react-test npm test -- --coverage
+
+after_success:
+    - docker build -t ganuelito/multi-client ./client
+    - docker build -t ganuelito/multi-nginx ./nginx
+    - docker build -t ganuelito/multi-server ./server
+    - docker build -t ganuelito/multi-worker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take those images and push them to docker hub
+    - docker push ganuelito/multi-client
+    - docker push ganuelito/multi-nginx
+    - docker push ganuelito/multi-server
+    - docker push ganuelito/multi-worker
